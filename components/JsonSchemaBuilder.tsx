@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { toast } from "sonner";
 
 interface SchemaField {
   id: string;
@@ -301,14 +302,21 @@ const JsonSchemaBuilder = () => {
               <Button
                 variant="outline"
                 size="sm"
+                className="cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(
-                    JSON.stringify(
-                      getJsonSchemaFromFields(watchedData.fields),
-                      null,
-                      2
-                    )
-                  );
+                  try {
+                    navigator.clipboard.writeText(
+                      JSON.stringify(
+                        getJsonSchemaFromFields(watchedData.fields),
+                        null,
+                        2
+                      )
+                    );
+                    toast.success("Copied to clipboard");
+                  } catch (error) {
+                    toast.error("Failed to copy to clipboard");
+                    console.error(error);
+                  }
                 }}
               >
                 Copy to Clipboard
