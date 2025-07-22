@@ -1,6 +1,6 @@
 "use client";
 import { Form } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
 import {
@@ -10,34 +10,19 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
-import { Input } from "./ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from "@/components/ui/select";
 import { toast } from "sonner";
-
-type DefaultValueType = string | number | boolean | string[] | number[] | null | undefined;
-
-interface JsonSchemaResult {
-  [key: string]: DefaultValueType | JsonSchemaResult;
-}
-
-interface SchemaField {
-  id: string;
-  name: string;
-  type: "string" | "number" | "boolean" | "array" | "nested";
-  defaultValue?: DefaultValueType;
-  nested?: SchemaField[];
-  fields?: SchemaField[];
-}
-
-const generateId = () => Math.random().toString(36).substr(2, 9);
+import { JsonSchemaResult, SchemaField } from "@/components/types";
+import { formSchema } from "@/components/schemas";
 
 const getDefaultValueForType = (type: string) => {
   switch (type) {
@@ -201,25 +186,6 @@ function FieldRow({
 }
 
 const JsonSchemaBuilder = () => {
-  const schemaFieldSchema: z.ZodType<SchemaField> = z.lazy(() =>
-    z.object({
-      id: z.string(),
-      name: z.string().min(1, "Field name is required"),
-      type: z.enum(["string", "number", "boolean", "array", "nested"]),
-      defaultValue: z.any().optional(),
-      nested: z
-        .array(schemaFieldSchema)
-        .optional()
-        .refine((nested) => !nested || nested.length <= 4, {
-          message: "Too many nested fields",
-        }),
-    })
-  );
-
-  const formSchema = z.object({
-    fields: z.array(schemaFieldSchema),
-  });
-
   const form = useForm<z.infer<typeof formSchema>>({
     // @ts-expect-error - the schema needs to be refined
     resolver: zodResolver(formSchema),
