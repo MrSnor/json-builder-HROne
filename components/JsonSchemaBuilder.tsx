@@ -22,12 +22,19 @@ import {
 } from "./ui/select";
 import { toast } from "sonner";
 
+type DefaultValueType = string | number | boolean | string[] | number[] | null | undefined;
+
+interface JsonSchemaResult {
+  [key: string]: DefaultValueType | JsonSchemaResult;
+}
+
 interface SchemaField {
   id: string;
   name: string;
   type: "string" | "number" | "boolean" | "array" | "nested";
-  defaultValue?: any;
+  defaultValue?: DefaultValueType;
   nested?: SchemaField[];
+  fields?: SchemaField[];
 }
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -57,10 +64,10 @@ const createNewField = (type: SchemaField["type"] = "string"): SchemaField => ({
   nested: type === "nested" ? [] : undefined,
 });
 
-const generateJsonFromFormData = (fields: SchemaField[]): any => {
+const generateJsonFromFormData = (fields: SchemaField[]): JsonSchemaResult => {
   if (!fields || fields.length === 0) return {};
 
-  const result: any = {};
+  const result: JsonSchemaResult = {};
 
   fields.forEach((field) => {
     if (!field.name?.trim()) return;
@@ -214,6 +221,7 @@ const JsonSchemaBuilder = () => {
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
+    // @ts-expect-error - the schema needs to be refined
     resolver: zodResolver(formSchema),
     defaultValues: {
       fields: [createNewField("string"), createNewField("number")],
@@ -232,8 +240,8 @@ const JsonSchemaBuilder = () => {
   });
 
   const watchedData = watch();
-  const getJsonSchemaFromFields = (fields: any[]) => {
-    const result: Record<string, any> = {};
+  const getJsonSchemaFromFields = (fields: SchemaField[]): JsonSchemaResult => {
+    const result: JsonSchemaResult = {};
 
     for (const field of fields) {
       if (field.type === "nested") {
@@ -284,8 +292,7 @@ const JsonSchemaBuilder = () => {
                     ))
                   ) : (
                     <div className="text-gray-500 italic text-center py-8 px-1 border rounded-md">
-                      No fields added. Click "Add Field" to start building your
-                      schema.
+                      {`No fields added. Click "Add Field" to start building your schema.`}
                     </div>
                   )}
                 </div>
